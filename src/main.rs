@@ -55,6 +55,9 @@ const POLYGON_CHAIN_ID: u64 = 137;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Load .env first (IDE + CLI compatible)
+    dotenvy::dotenv().ok();
+    
     // Initialize logging
     tracing_subscriber::fmt()
         .with_env_filter(

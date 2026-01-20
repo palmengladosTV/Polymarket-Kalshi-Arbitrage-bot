@@ -288,6 +288,14 @@ impl KalshiApiClient {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
+
+        // --- NEU: BODY LOGGING ---
+        let body_json = serde_json::to_string(body).unwrap_or_else(|_| "Serialization failed".into());
+        debug!("[KALSHI-API-REQUEST] URL: {}", url);
+        debug!("[KALSHI-API-REQUEST] Body: {}", body_json);
+        // -------------------------
+
+
         // Kalshi signature uses FULL path including /trade-api/v2 prefix
         let full_path = format!("/trade-api/v2{}", path);
         let msg = format!("{}POST{}", timestamp_ms, full_path);
@@ -305,12 +313,18 @@ impl KalshiApiClient {
             .await?;
 
         let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_default();
+        // --- NEU: RESPONSE LOGGING ---
+        debug!("[KALSHI-API-RESPONSE] Status: {} Body: {}", status, body_text);
+        // -------------------------
+
         if !status.is_success() {
-            let body = resp.text().await.unwrap_or_default();
-            anyhow::bail!("Kalshi API error {}: {}", status, body);
+            //let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("Kalshi API error {}: {}", status, body_text); //only body
         }
         
-        let data: T = resp.json().await?;
+        //let data: T = resp.json().await?;
+        let data: T = serde_json::from_str(&body_text)?;
         Ok(data)
     }
     

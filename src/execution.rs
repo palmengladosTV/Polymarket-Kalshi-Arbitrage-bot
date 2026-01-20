@@ -134,9 +134,9 @@ impl ExecutionEngine {
         // Note: Polymarket enforces a $1 minimum order value. At 40¢ per contract,
         // a single contract ($0.40) would be rejected. Using 10 contracts ensures
         // we meet the minimum requirement at any reasonable price level.
-        if self.test_mode && max_contracts > 10 {
-            warn!("[EXEC] ⚠️ TEST_MODE: Position size capped from {} to 10 contracts", max_contracts);
-            max_contracts = 10;
+        if self.test_mode && max_contracts > 3 {
+            warn!("[EXEC] ⚠️ TEST_MODE: Position size capped from {} to 3 contracts", max_contracts);
+            max_contracts = 3;
         }
 
         if max_contracts < 1 {
@@ -295,10 +295,12 @@ impl ExecutionEngine {
         match req.arb_type {
             // === CROSS-PLATFORM: Poly YES + Kalshi NO ===
             ArbType::PolyYesKalshiNo => {
+                let raw_price= req.no_price;
+                let exec_price = (raw_price+3).min(99);
                 let kalshi_fut = self.kalshi.buy_ioc(
                     &pair.kalshi_market_ticker,
                     "no",
-                    req.no_price as i64,
+                    exec_price as i64, //req.no_price
                     contracts,
                 );
                 let poly_fut = self.poly_async.buy_fak(
@@ -318,9 +320,12 @@ impl ExecutionEngine {
                     req.yes_price as i64,
                     contracts,
                 );
+                let raw_price= req.no_price;
+                let exec_price = (raw_price+3).min(99);
+
                 let poly_fut = self.poly_async.buy_fak(
                     &pair.poly_no_token,
-                    cents_to_price(req.no_price),
+                    cents_to_price(exec_price),//req.no_price,
                     contracts as f64,
                 );
                 let (kalshi_res, poly_res) = tokio::join!(kalshi_fut, poly_fut);
@@ -334,9 +339,11 @@ impl ExecutionEngine {
                     cents_to_price(req.yes_price),
                     contracts as f64,
                 );
+                let raw_price= req.no_price;
+                let exec_price = (raw_price+3).min(99);
                 let no_fut = self.poly_async.buy_fak(
                     &pair.poly_no_token,
-                    cents_to_price(req.no_price),
+                    cents_to_price(exec_price),//req.no_price
                     contracts as f64,
                 );
                 let (yes_res, no_res) = tokio::join!(yes_fut, no_fut);
@@ -351,10 +358,12 @@ impl ExecutionEngine {
                     req.yes_price as i64,
                     contracts,
                 );
+                let raw_price= req.no_price;
+                let exec_price = (raw_price+3).min(99);
                 let no_fut = self.kalshi.buy_ioc(
                     &pair.kalshi_market_ticker,
                     "no",
-                    req.no_price as i64,
+                    exec_price as i64, //req.noprice
                     contracts,
                 );
                 let (yes_res, no_res) = tokio::join!(yes_fut, no_fut);

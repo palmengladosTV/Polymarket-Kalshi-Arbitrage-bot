@@ -5,6 +5,8 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+//use tracing::{error, info, warn, debug};
+use tracing::{debug};
 use anyhow::{Result, anyhow};
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -684,11 +686,24 @@ impl SharedAsyncClient {
             nonce: "0",
             signer: &self.inner.wallet_address_str,
             expiration: "0",
-            signature_type: 1,
+            signature_type: 2, //Changed signature type here from 1 to 2
             salt,
         };
         let exchange = get_exchange_address(self.chain_id, neg_risk)?;
-        let typed = order_typed_data(self.chain_id, &exchange, &data)?;
+        
+debug!("--- DEBUG SIGNATURE ---");
+debug!("Token ID: {}", token_id);
+debug!("Neg Risk erkannt: {}", neg_risk);
+debug!("Exchange Contract: {}", exchange);
+debug!("Maker (Funder): {}", self.inner.funder);
+debug!("Signer (Wallet): {}", self.inner.wallet_address_str);
+debug!("Chain ID: {}", self.chain_id);
+debug!("Side: {}", side_code);
+debug!("Maker Amount (Raw): {}", maker_amount_str); 
+debug!("Taker Amount (Raw): {}", taker_amount_str);
+debug!("-----------------------");
+
+	let typed = order_typed_data(self.chain_id, &exchange, &data)?;
         let digest = typed.encode_eip712()?;
 
         let sig = self.inner.wallet.sign_hash(H256::from(digest))?;
@@ -707,7 +722,7 @@ impl SharedAsyncClient {
                 nonce: "0".to_string(),
                 fee_rate_bps: "0".to_string(),
                 side: side_code,
-                signature_type: 1,
+                signature_type: 2, //Changed signature type here from 1 to 2
             },
             signature: format!("0x{}", sig),
         })
